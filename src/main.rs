@@ -2,7 +2,6 @@ use std::fs;
 use regex::Regex;
 // use std::cmp::Ordering;
 
-
 fn main() {
     println!("Hello, World! 🌍");
     build_xml_with_one_filename_and_save_it_on_my_desktop(
@@ -56,7 +55,6 @@ fn get_file_names_from_file_path(filepath: String) -> Vec<String> {
     filenames
 }
 
-
 fn extract_type(filename: &str) -> String {
     let re = Regex::new(r"(\d+\s*(?i)bpm|\D+)").unwrap();
     let mut type_string = String::new();
@@ -77,4 +75,3 @@ fn extract_number(filename: &str) -> i32 {
         0
     }
 }
-
