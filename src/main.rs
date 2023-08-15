@@ -3,6 +3,8 @@ use regex::Regex;
 use std::path::PathBuf;
 use rayon::prelude::*;
 
+mod xml_boilerplate;
+
 fn main() {
     println!("Hello, World! 🌍");
     if let Err(e) = build_xml_file_from_filenames(
@@ -18,7 +20,23 @@ fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::er
     for filename in &filenames {
         println!("filename {:?}", filename);
     }
+    // build an xml file using each filename
+        // for each filename well build a <sound> tag which will largely be boilerplate
+        // the only thing that will change is the filePath property in each osc1 tag within the sound tag, 
+        // and the name property near the top of the sound tag
+    // once we hit 8 sound tags we'll stuff them in the soundSource tag in the xml file boilerplate and then 
+    // save the xml file with the name we accept as an argument to the main function from the console in a folder 
+    // with a name which is also specified as an argument to our main function from the console. then save that to the desktop. 
+    // then we'll keep building xml files until we run out of filenames.
+    for filename in &filenames {
+        build_sound_tag_from_filename(filename.to_string());
+    }
     Ok(())
+}
+
+
+fn build_sound_tag_from_filename(filename: String) {
+    let sound_tag = xml_boilerplate::SOUND_TAG_BOILERPLATE;
 }
 
 fn get_file_names_from_file_path(filepath: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
