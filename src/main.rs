@@ -1,19 +1,19 @@
 use std::fs;
 use regex::Regex;
 use std::path::PathBuf;
+use rayon::prelude::*;
 
 fn main() {
     println!("Hello, World! 🌍");
-    match build_xml_with_one_filename_and_save_it_on_my_desktop(
-        "/Users/alexandereversbusch/Desktop/Downloaded Sample Packs/Arthur Duboise/loops/".to_string()
+    if let Err(e) = build_xml_file_from_filenames(
+        "/Users/alexandereversbusch/Desktop/Downloaded Sample Packs/Arthur Duboise/".to_string()
         // "/Users/alexandereversbusch/Desktop/Downloaded Sample Packs/RSKT/".to_string()
     ) {
-        Ok(_) => {},
-        Err(e) => println!("Error: {}", e),
+        println!("Error: {}", e);
     }
 }
 
-fn build_xml_with_one_filename_and_save_it_on_my_desktop(filepath: String) -> Result<(), String> {
+fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::error::Error>> {
     let filenames = get_file_names_from_file_path(&filepath)?;
     for filename in &filenames {
         println!("filename {:?}", filename);
@@ -21,30 +21,39 @@ fn build_xml_with_one_filename_and_save_it_on_my_desktop(filepath: String) -> Re
     Ok(())
 }
 
-fn get_file_names_from_file_path(filepath: &str) -> Result<Vec<String>, String> {
+fn get_file_names_from_file_path(filepath: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let path = PathBuf::from(filepath);
-    let mut filenames: Vec<String> = Vec::new();
-
-    let entries = fs::read_dir(&path).map_err(|_| "Error reading directory".to_string())?;
-    for entry in entries {
-        let entry = entry.map_err(|_| "Error reading entry".to_string())?;
-        if entry.path().is_dir() {
-            let new_path = path.join(entry.file_name());
-            let mut new_filenames = get_file_names_from_file_path(new_path.to_str().ok_or("Invalid path")?)?;
-            filenames.append(&mut new_filenames);
-        } else {
-            if !entry.file_name().to_string_lossy().starts_with('.') {
-                filenames.push(entry.file_name().to_string_lossy().to_string());
-            }
-        }
+    if !path.exists() || !path.is_dir() {
+        return Err(format!("Path '{}' either doesn't exist or isn't a directory", filepath).into());
     }
 
-    filenames.sort_by(|a, b| {
+    let mut filenames: Vec<String> = Vec::new();
+
+    let entries: Vec<_> = fs::read_dir(&path)?.collect();
+    filenames.par_extend(entries.par_iter().filter_map(|entry| {
+        let entry = entry.as_ref().ok()?;
+        if entry.path().is_dir() {
+            let new_path = path.join(entry.file_name());
+            get_file_names_from_file_path(new_path.to_str()?).ok()
+        } else {
+            if !entry.file_name().to_string_lossy().starts_with('.') {
+                Some(vec![entry.file_name().to_string_lossy().to_string()])
+            } else {
+                None
+            }
+        }
+    }).flatten());
+
+    let re_start = Regex::new(r"^(\d+)")?;
+    let re_end = Regex::new(r"(\d+)\.wav$")?;
+    let re_parenthesis = Regex::new(r"\((\d+)\)")?; 
+
+    filenames.par_sort_by(|a, b| {
         let type_a = extract_type(a);
         let type_b = extract_type(b);
         type_a.cmp(&type_b).then_with(|| {
-            let num_a = extract_number(a);
-            let num_b = extract_number(b);
+            let num_a = extract_number(a, &re_start, &re_end, &re_parenthesis);
+            let num_b = extract_number(b, &re_start, &re_end, &re_parenthesis);
             num_a.cmp(&num_b)
         })
     });
@@ -52,6 +61,7 @@ fn get_file_names_from_file_path(filepath: &str) -> Result<Vec<String>, String> 
     Ok(filenames)
 }
 
+// ======= Sorting Logic =======
 fn extract_type(filename: &str) -> String {
     let re = Regex::new(r"(\d+\s*(?i)bpm|\D+)").unwrap();
     let mut type_string = String::new();
@@ -61,19 +71,14 @@ fn extract_type(filename: &str) -> String {
     type_string
 }
 
-fn extract_number(filename: &str) -> i32 {
-    let re_start = Regex::new(r"^(\d+)").unwrap();
-    let re_end = Regex::new(r"(\d+)\.wav$").unwrap();
-    let re_parenthesis = Regex::new(r"\((\d+)\)").unwrap(); // New regex to capture numbers in parentheses
-
+fn extract_number(filename: &str, re_start: &Regex, re_end: &Regex, re_parenthesis: &Regex) -> i32 {
     if let Some(cap) = re_start.captures(filename) {
         cap[1].parse().unwrap_or(0)
     } else if let Some(cap) = re_end.captures(filename) {
         cap[1].parse().unwrap_or(0)
-    } else if let Some(cap) = re_parenthesis.captures(filename) { // Check for numbers in parentheses
+    } else if let Some(cap) = re_parenthesis.captures(filename) {
         cap[1].parse().unwrap_or(0)
     } else {
         0
     }
 }
-
