@@ -2,6 +2,7 @@ use std::fs;
 use regex::Regex;
 use std::path::PathBuf;
 use rayon::prelude::*;
+use std::io::Write;
 
 mod xml_boilerplate;
 
@@ -17,27 +18,35 @@ fn main() {
 
 fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::error::Error>> {
     let filenames = get_file_names_from_file_path(&filepath)?;
+    let mut xml_strings = Vec::new();
+
     for filename in &filenames {
-        println!("filename {:?}", filename);
+        xml_strings.push(generate_xml_for_filename(filename));
     }
-    // build an xml file using each filename
-        // for each filename well build a <sound> tag which will largely be boilerplate
-        // the only thing that will change is the filePath property in each osc1 tag within the sound tag, 
-        // and the name property near the top of the sound tag
-    // once we hit 8 sound tags we'll stuff them in the soundSource tag in the xml file boilerplate and then 
-    // save the xml file with the name we accept as an argument to the main function from the console in a folder 
-    // with a name which is also specified as an argument to our main function from the console. then save that to the desktop. 
-    // then we'll keep building xml files until we run out of filenames.
-    for filename in &filenames {
-        build_sound_tag_from_filename(filename.to_string());
+
+    for (index, chunk) in xml_strings.chunks(8).enumerate() {
+        let combined_xml = chunk.join("\n");
+        save_to_xml_file(&combined_xml, "desired_folder_name", &format!("desired_filename_{}", index))?;
     }
+
     Ok(())
 }
 
-
-fn build_sound_tag_from_filename(filename: String) {
-    let sound_tag = xml_boilerplate::SOUND_TAG_BOILERPLATE;
+fn generate_xml_for_filename(filename: &str) -> String {
+    let name = filename.split('/').last().unwrap_or(filename);
+    format!("{} {} {}", xml_boilerplate::SOUND_TAG_BOILERPLATE, name, filename)
 }
+
+fn save_to_xml_file(data: &str, folder_name: &str, filename: &str) -> std::io::Result<()> {
+    let folder_path = format!("/Users/alexandereversbusch/Desktop/{}", folder_name);
+    fs::create_dir_all(&folder_path)?;
+
+    let file_path = format!("{}/{}.xml", folder_path, filename);
+    let mut file = fs::File::create(file_path)?;
+    file.write_all(data.as_bytes())?;
+    Ok(())
+}
+
 
 fn get_file_names_from_file_path(filepath: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let path = PathBuf::from(filepath);
