@@ -21,7 +21,7 @@ fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::er
     let mut xml_strings = Vec::new();
 
     for filename in &filenames {
-        xml_strings.push(generate_xml_for_filename(filename));
+        xml_strings.push(generate_xml_for_filename(filename, &filepath));
     }
 
     for (index, chunk) in xml_strings.chunks(8).enumerate() {
@@ -32,9 +32,10 @@ fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::er
     Ok(())
 }
 
-fn generate_xml_for_filename(filename: &str) -> String {
-    let name = filename.split('/').last().unwrap_or(filename);
-    format!("{} {} {}", xml_boilerplate::SOUND_TAG_BOILERPLATE, name, filename)
+fn generate_xml_for_filename(filename: &str, filepath: &str) -> String {
+    todo!("The file path needs to be way smarter since for each file we can't just use the same path we give the program.");
+    let individual_file_path = format!("{}{}", filepath, filename);
+    format!("{} {} {}", xml_boilerplate::SOUND_TAG_BOILERPLATE, filename, individual_file_path)
 }
 
 fn save_to_xml_file(data: &str, folder_name: &str, filename: &str) -> std::io::Result<()> {
