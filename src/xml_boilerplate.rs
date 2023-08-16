@@ -1,6 +1,6 @@
 pub const SOUND_TAG_BOILERPLATE: &str = r#"
     <sound
-        name="{}"
+        name="{name}"
         polyphonic="auto"
         voicePriority="1"
         sideChainSend="2147483647"
@@ -13,7 +13,7 @@ pub const SOUND_TAG_BOILERPLATE: &str = r#"
             reversed="0"
             timeStretchEnable="0"
             timeStretchAmount="0"
-            fileName="{}">
+            fileName="{filename}">
             <zone
                 startSamplePos="0"
                 endSamplePos="52500" />
@@ -126,3 +126,4 @@ pub const SOUND_TAG_BOILERPLATE: &str = r#"
         </modKnobs>
     </sound>
 "#;
+

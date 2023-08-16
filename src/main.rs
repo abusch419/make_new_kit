@@ -20,24 +20,27 @@ fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::er
     let mut xml_strings = Vec::new();
 
     for (filename, file_path) in &file_paths {
-        xml_strings.push(generate_xml_for_filename(filename, &file_path));
+        xml_strings.push(generate_xml_for_filename(&filename, file_path.to_str().unwrap()));
     }
 
     for (index, chunk) in xml_strings.chunks(8).enumerate() {
         let combined_xml = chunk.join("\n");
-        save_to_xml_file(&combined_xml, "desired_folder_name", &format!("desired_filename_{}", index))?;
+        save_to_xml_file(
+            &combined_xml,
+            "desired_folder_name",
+            &format!("desired_filename_{}", index)
+        )?;
     }
 
     Ok(())
 }
 
-fn generate_xml_for_filename(filename: &str, filepath: &PathBuf) -> String {
-    let individual_file_path = format!("{}", filepath.display());
+fn generate_xml_for_filename(name: &str, filename: &str) -> String {
     format!(
         "{} {} {}",
         xml_boilerplate::SOUND_TAG_BOILERPLATE,
-        filename,
-        individual_file_path
+        name,
+        filename
     )
 }
 
@@ -51,7 +54,9 @@ fn save_to_xml_file(data: &str, folder_name: &str, filename: &str) -> std::io::R
     Ok(())
 }
 
-fn get_file_paths_from_file_path(filepath: &str) -> Result<Vec<(String, PathBuf)>, Box<dyn std::error::Error>> {
+fn get_file_paths_from_file_path(
+    filepath: &str
+) -> Result<Vec<(String, PathBuf)>, Box<dyn std::error::Error>> {
     let path = PathBuf::from(filepath);
     if !path.exists() || !path.is_dir() {
         return Err(format!("Path '{}' either doesn't exist or isn't a directory", filepath).into());
@@ -71,7 +76,7 @@ fn get_file_paths_from_file_path(filepath: &str) -> Result<Vec<(String, PathBuf)
             if !entry.file_name().to_string_lossy().starts_with('.') {
                 file_paths.push((
                     entry.file_name().to_string_lossy().to_string(),
-                    entry.path().to_path_buf()
+                    entry.path().to_path_buf(),
                 ));
             }
         }
@@ -91,7 +96,6 @@ fn get_file_paths_from_file_path(filepath: &str) -> Result<Vec<(String, PathBuf)
         })
     });
 
-
     for file_path in &file_paths {
         println!("{} {}", file_path.0, file_path.1.display());
     }
@@ -109,7 +113,7 @@ fn extract_type(filename: &str) -> String {
     type_string
 }
 
-fn extract_number(filename: &str, re_start: &Regex, re_end: &Regex, re_parenthesis: &Regex) -> i32 {
+fn extract_number(filename: &str, re_start: &Regex, re_end: &Regex, re_parenthesis: &Regex) -> u32 {
     if let Some(cap) = re_start.captures(filename) {
         cap[1].parse().unwrap_or(0)
     } else if let Some(cap) = re_end.captures(filename) {
