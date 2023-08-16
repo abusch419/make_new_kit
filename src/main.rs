@@ -5,10 +5,16 @@ use rayon::prelude::*;
 use std::io::Write;
 use tera::Tera;
 
+const FILEPATH: &str = "/Users/alexandereversbusch/Desktop/rskt transfer test/";
+const OUTPUT_FOLDER_NAME: &str = "rskt fillz group 2";
+const OUTPUT_FILE_NAME: &str = "~ RSKT Fillz Group 2 120 BPM";
+const DESKTOP_PATH: &str = "/Users/alexandereversbusch/Desktop/";
+const DELUGE_PATH_PREFIX: &str = "SAMPLES/RSKT Sample Pack/";
+
 fn main() {
     println!("Hello, World! 🌍");
     if let Err(e) = build_xml_file_from_filenames(
-        "/Users/alexandereversbusch/Desktop/rskt transfer test/".to_string()
+        FILEPATH.to_string()
     ) {
         println!("Error: {}", e);
     }
@@ -35,8 +41,8 @@ fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::er
 
         save_to_xml_file(
             &combined_xml,
-            "rskt_kicks",
-            &format!("~ RSKT Kicks {}", index)
+            OUTPUT_FOLDER_NAME,
+            &format!("{} {}",OUTPUT_FILE_NAME, index)
         )?;
     }
 
@@ -51,14 +57,14 @@ fn generate_xml_for_filename(name: &str, filename: &str) -> String {
     let mut context = tera::Context::new();
     context.insert("name", name);
     // this should be called filepath, but I'm too lazy to change it right now
-    let filename_modified_for_deluge = filename.replace("/Users/alexandereversbusch/Desktop/rskt transfer test/", "SAMPLES/RSKT Sample Pack/");
+    let filename_modified_for_deluge = filename.replace(FILEPATH, DELUGE_PATH_PREFIX);
     context.insert("filename", &filename_modified_for_deluge);
 
     tera.render("xml_template", &context).unwrap()
 }
 
 fn save_to_xml_file(data: &str, folder_name: &str, filename: &str) -> std::io::Result<()> {
-    let folder_path = format!("/Users/alexandereversbusch/Desktop/{}", folder_name);
+    let folder_path = format!("{}{}", DESKTOP_PATH, folder_name);
     fs::create_dir_all(&folder_path)?;
 
     let file_path = format!("{}/{}.xml", folder_path, filename);
