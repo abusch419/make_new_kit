@@ -16,14 +16,23 @@ fn main() {
 
 fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::error::Error>> {
     let file_paths = get_file_paths_from_file_path(&filepath)?;
-    let mut xml_strings = Vec::new();
 
-    for (filename, file_path) in &file_paths {
-        xml_strings.push(generate_xml_for_filename(&filename, file_path.to_str().unwrap()));
-    }
+    let first_half_of_wrapper = include_str!("first_half_of_xml_wrapper_boilerplate.xml");
+    let second_half_of_wrapper = include_str!("second_half_of_xml_wrapper_boilerplate.xml");
 
-    for (index, chunk) in xml_strings.chunks(8).enumerate() {
-        let combined_xml = chunk.join("\n");
+    for (index, chunk) in file_paths.chunks(8).enumerate() {
+        let mut combined_xml = String::new();
+        combined_xml.push_str(first_half_of_wrapper);
+
+        for (filename, file_path) in chunk {
+            let sound_xml = generate_xml_for_filename(&filename, file_path.to_str().unwrap());
+            combined_xml.push_str("\n");
+            combined_xml.push_str(&sound_xml);
+            combined_xml.push_str("\n");
+        }
+
+        combined_xml.push_str(second_half_of_wrapper);
+
         save_to_xml_file(
             &combined_xml,
             "desired_folder_name",
@@ -36,7 +45,7 @@ fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::er
 
 fn generate_xml_for_filename(name: &str, filename: &str) -> String {
     let mut tera = Tera::default();
-    tera.add_raw_template("xml_template", include_str!("xml_boilerplate.xml"))
+    tera.add_raw_template("xml_template", include_str!("sound_tag_boilerplate.xml"))
         .unwrap();
 
     let mut context = tera::Context::new();
