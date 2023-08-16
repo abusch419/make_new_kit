@@ -10,18 +10,17 @@ fn main() {
     println!("Hello, World! 🌍");
     if let Err(e) = build_xml_file_from_filenames(
         "/Users/alexandereversbusch/Desktop/Downloaded Sample Packs/Arthur Duboise/".to_string()
-        // "/Users/alexandereversbusch/Desktop/Downloaded Sample Packs/RSKT/".to_string()
     ) {
         println!("Error: {}", e);
     }
 }
 
 fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::error::Error>> {
-    let filenames = get_file_names_from_file_path(&filepath)?;
+    let file_paths = get_file_paths_from_file_path(&filepath)?;
     let mut xml_strings = Vec::new();
 
-    for filename in &filenames {
-        xml_strings.push(generate_xml_for_filename(filename, &filepath));
+    for (filename, file_path) in &file_paths {
+        xml_strings.push(generate_xml_for_filename(filename, &file_path));
     }
 
     for (index, chunk) in xml_strings.chunks(8).enumerate() {
@@ -32,10 +31,14 @@ fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::er
     Ok(())
 }
 
-fn generate_xml_for_filename(filename: &str, filepath: &str) -> String {
-    todo!("The file path needs to be way smarter since for each file we can't just use the same path we give the program.");
-    let individual_file_path = format!("{}{}", filepath, filename);
-    format!("{} {} {}", xml_boilerplate::SOUND_TAG_BOILERPLATE, filename, individual_file_path)
+fn generate_xml_for_filename(filename: &str, filepath: &PathBuf) -> String {
+    let individual_file_path = format!("{}", filepath.display());
+    format!(
+        "{} {} {}",
+        xml_boilerplate::SOUND_TAG_BOILERPLATE,
+        filename,
+        individual_file_path
+    )
 }
 
 fn save_to_xml_file(data: &str, folder_name: &str, filename: &str) -> std::io::Result<()> {
@@ -48,45 +51,52 @@ fn save_to_xml_file(data: &str, folder_name: &str, filename: &str) -> std::io::R
     Ok(())
 }
 
-
-fn get_file_names_from_file_path(filepath: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+fn get_file_paths_from_file_path(filepath: &str) -> Result<Vec<(String, PathBuf)>, Box<dyn std::error::Error>> {
     let path = PathBuf::from(filepath);
     if !path.exists() || !path.is_dir() {
         return Err(format!("Path '{}' either doesn't exist or isn't a directory", filepath).into());
     }
 
-    let mut filenames: Vec<String> = Vec::new();
+    let mut file_paths: Vec<(String, PathBuf)> = Vec::new();
 
     let entries: Vec<_> = fs::read_dir(&path)?.collect();
-    filenames.par_extend(entries.par_iter().filter_map(|entry| {
-        let entry = entry.as_ref().ok()?;
+    for entry in entries {
+        let entry = entry?;
         if entry.path().is_dir() {
-            let new_path = path.join(entry.file_name());
-            get_file_names_from_file_path(new_path.to_str()?).ok()
+            if let Some(new_path) = entry.path().to_str() {
+                let sub_file_paths = get_file_paths_from_file_path(new_path)?;
+                file_paths.extend(sub_file_paths);
+            }
         } else {
             if !entry.file_name().to_string_lossy().starts_with('.') {
-                Some(vec![entry.file_name().to_string_lossy().to_string()])
-            } else {
-                None
+                file_paths.push((
+                    entry.file_name().to_string_lossy().to_string(),
+                    entry.path().to_path_buf()
+                ));
             }
         }
-    }).flatten());
+    }
 
     let re_start = Regex::new(r"^(\d+)")?;
     let re_end = Regex::new(r"(\d+)\.wav$")?;
-    let re_parenthesis = Regex::new(r"\((\d+)\)")?; 
+    let re_parenthesis = Regex::new(r"\((\d+)\)")?;
 
-    filenames.par_sort_by(|a, b| {
-        let type_a = extract_type(a);
-        let type_b = extract_type(b);
+    file_paths.par_sort_by(|(filename_a, _), (filename_b, _)| {
+        let type_a = extract_type(filename_a);
+        let type_b = extract_type(filename_b);
         type_a.cmp(&type_b).then_with(|| {
-            let num_a = extract_number(a, &re_start, &re_end, &re_parenthesis);
-            let num_b = extract_number(b, &re_start, &re_end, &re_parenthesis);
+            let num_a = extract_number(filename_a, &re_start, &re_end, &re_parenthesis);
+            let num_b = extract_number(filename_b, &re_start, &re_end, &re_parenthesis);
             num_a.cmp(&num_b)
         })
     });
 
-    Ok(filenames)
+
+    for file_path in &file_paths {
+        println!("{} {}", file_path.0, file_path.1.display());
+    }
+
+    Ok(file_paths)
 }
 
 // ======= Sorting Logic =======
