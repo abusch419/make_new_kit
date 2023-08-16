@@ -8,7 +8,7 @@ use tera::Tera;
 fn main() {
     println!("Hello, World! 🌍");
     if let Err(e) = build_xml_file_from_filenames(
-        "/Users/alexandereversbusch/Desktop/Downloaded Sample Packs/Arthur Duboise/".to_string()
+        "/Users/alexandereversbusch/Desktop/rskt transfer test/".to_string()
     ) {
         println!("Error: {}", e);
     }
@@ -35,8 +35,8 @@ fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::er
 
         save_to_xml_file(
             &combined_xml,
-            "desired_folder_name",
-            &format!("desired_filename_{}", index)
+            "rskt_kicks",
+            &format!("~ RSKT Kicks {}", index)
         )?;
     }
 
@@ -50,7 +50,9 @@ fn generate_xml_for_filename(name: &str, filename: &str) -> String {
 
     let mut context = tera::Context::new();
     context.insert("name", name);
-    context.insert("filename", filename);
+    // this should be called filepath, but I'm too lazy to change it right now
+    let filename_modified_for_deluge = filename.replace("/Users/alexandereversbusch/Desktop/rskt transfer test/", "SAMPLES/RSKT Sample Pack/");
+    context.insert("filename", &filename_modified_for_deluge);
 
     tera.render("xml_template", &context).unwrap()
 }

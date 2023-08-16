@@ -12,3 +12,8 @@ Finally run cargo run and you sohuld get a folder full of kit files to test on y
 
 Made with 🖤 by Busch 
 Deep Current / Folk Art / Vulture Stone
+
+
+Gotchas:
+Whatever folder you point the script to has to match the same folder structure for where your sample will ultimately be found on the deluge. 
+This part takes some figuring out. 
