@@ -20,7 +20,7 @@ This is why I process voices by group - kick, snare, hi hat, cymbal, etc.
 
 When it come to loops - it might make more sense to process large groups of different loop types at once if the names are hard to categorize under one single identifier. 
 
-Here's a tiny video of how I use it.
+Here's a low res video (sry) of how I use it.
 
 https://github.com/abusch419/make_new_kit/assets/48231024/40927f2e-008c-4026-bcb6-9dd03ac3575b
 
