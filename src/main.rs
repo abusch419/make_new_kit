@@ -3,8 +3,7 @@ use regex::Regex;
 use std::path::PathBuf;
 use rayon::prelude::*;
 use std::io::Write;
-
-mod xml_boilerplate;
+use tera::Tera;
 
 fn main() {
     println!("Hello, World! 🌍");
@@ -36,12 +35,15 @@ fn build_xml_file_from_filenames(filepath: String) -> Result<(), Box<dyn std::er
 }
 
 fn generate_xml_for_filename(name: &str, filename: &str) -> String {
-    format!(
-        "{} {} {}",
-        xml_boilerplate::SOUND_TAG_BOILERPLATE,
-        name,
-        filename
-    )
+    let mut tera = Tera::default();
+    tera.add_raw_template("xml_template", include_str!("xml_boilerplate.xml"))
+        .unwrap();
+
+    let mut context = tera::Context::new();
+    context.insert("name", name);
+    context.insert("filename", filename);
+
+    tera.render("xml_template", &context).unwrap()
 }
 
 fn save_to_xml_file(data: &str, folder_name: &str, filename: &str) -> std::io::Result<()> {
