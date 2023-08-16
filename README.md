@@ -1,19 +1,26 @@
-# make_new_kit
-make new kits on the deluge with rust 
-
+# Make new kits from sample packs automatically for the deluge with Rust!
 
 Making new kits on the deluge when you get a new sample pack is tedious and time consuming.
+
 This script allows you to extract the filenames out of a sample pack and then automaticallty create however many kits are needed to capture all of the files. 
 XML files are generated and saved to your desktop under a name of your choosing. 
 
-To run the script just clone this repo. Download Rust. Navigate to the repo on your machine. Pop open an IDE. Hard code the file path for your new sample pack in the main function in main.rs, and provide a better name than desired_folder_name and desired_file_name for the files and folder that will be generated, and also don't forget to hard code the path to your individual desktop. 
+To run the script follow these steps:
+1. Clone this repo. 
+2. Download Rust. 
+3. Navigate to the repo on your machine. 
+4. Pop open a code editor. 
+5. Hard code the global variables at the top of main.rs and read the comments carefully when doing do. 
 
-Finally run cargo run and you sohuld get a folder full of kit files to test on your deluge. 
+Finally run cargo run and you should get a folder full of kit files to test on your deluge. 
+
+I recommend running one folder of voices at a time to avoid confusing naming. The script isn't smart enough to name all the kits with the voices they contain - kit names are currently hard coded. This is because the script also isn't smart enough to create kits by voice. This would be difficult in some cases since all sample packs have different naming conventions. 
+
+This is why I process voices by group - kick, snare, hi hat, cymbal, etc. 
+
+When it come to loops - it might make more sense to process large groups of different loop types at once if the names are hard to categorize under one single identifier. 
+
 
 Made with 🖤 by Busch 
 Deep Current / Folk Art / Vulture Stone
-
-
-Gotchas:
-Whatever folder you point the script to has to match the same folder structure for where your sample will ultimately be found on the deluge. 
-This part takes some figuring out. 
+abusch419@gmail.com

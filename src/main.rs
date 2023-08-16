@@ -5,16 +5,29 @@ use rayon::prelude::*;
 use std::io::Write;
 use tera::Tera;
 
-const FILEPATH: &str = "/Users/alexandereversbusch/Desktop/rskt transfer test/";
+// Where your samples are going to be processed from locally. 
+// I recommend making this a folder separate from your main sample folder since the script isn't smart enough to name kits by folder or sub folder yet.
+const LOCAL_PATH_TO_SAMPLES: &str = "/Users/alexandereversbusch/Desktop/rskt transfer test/";
+// The name of the folder where the new xml files will go on your desktop
 const OUTPUT_FOLDER_NAME: &str = "rskt fillz group 2";
+// For each run of the script, this will be the name of the kits generated with a numebr appended to the end starting at 0
+    // make this smarer so it doesn't have to be changed every time
+    // use the name of the first folder up from where the file names 
+    // came from and process them by folder instead of all at once
 const OUTPUT_FILE_NAME: &str = "~ RSKT Fillz Group 2 120 BPM";
+// Tha path to your desktop
 const DESKTOP_PATH: &str = "/Users/alexandereversbusch/Desktop/";
+// This will be the path to the folder where the samples are stored on your deluge. 
+// All samples on the deluge must live in SAMPLES, and the name is arbitrary as long as 
+// everything inside this folder is structured the same way as it was when it was processed by this script. 
+// This is because the script uses the path to each file to generate the xml tags for each kit, and they must 
+// match in order for the deluge to know where to look for the voices within a kit. 
 const DELUGE_PATH_PREFIX: &str = "SAMPLES/RSKT Sample Pack/";
 
 fn main() {
     println!("Hello, World! 🌍");
     if let Err(e) = build_xml_file_from_filenames(
-        FILEPATH.to_string()
+        LOCAL_PATH_TO_SAMPLES.to_string()
     ) {
         println!("Error: {}", e);
     }
@@ -57,7 +70,7 @@ fn generate_xml_for_filename(name: &str, filename: &str) -> String {
     let mut context = tera::Context::new();
     context.insert("name", name);
     // this should be called filepath, but I'm too lazy to change it right now
-    let filename_modified_for_deluge = filename.replace(FILEPATH, DELUGE_PATH_PREFIX);
+    let filename_modified_for_deluge = filename.replace(LOCAL_PATH_TO_SAMPLES, DELUGE_PATH_PREFIX);
     context.insert("filename", &filename_modified_for_deluge);
 
     tera.render("xml_template", &context).unwrap()
@@ -122,7 +135,6 @@ fn get_file_paths_from_file_path(
     Ok(file_paths)
 }
 
-// ======= Sorting Logic =======
 fn extract_type(filename: &str) -> String {
     let re = Regex::new(r"(\d+\s*(?i)bpm|\D+)").unwrap();
     let mut type_string = String::new();
